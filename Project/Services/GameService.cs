@@ -45,7 +45,7 @@ namespace ConsoleAdventure.Project
             throw new System.NotImplementedException();
         }
 
-        public void Setup(Player player)
+        public void Setup(string playerName)
         {
             throw new System.NotImplementedException();
         }

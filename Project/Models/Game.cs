@@ -7,6 +7,7 @@ namespace ConsoleAdventure.Project.Models
         public IRoom CurrentRoom { get; set; }
         public IPlayer CurrentPlayer { get; set; }
 
+        //NOTE Make yo rooms here...
         public void Setup()
         {
             throw new System.NotImplementedException();

@@ -7,7 +7,6 @@ namespace ConsoleAdventure.Project
     public class GameService : IGameService
     {
         private IGame _game { get; set; }
-        public bool Playing { get; set; }
 
         public List<string> Messages { get; set; }
         public GameService()

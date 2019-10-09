@@ -1,7 +1,7 @@
 ﻿using System;
-using CastleGrimtol.Project;
+using ConsoleAdventure.Project;
 
-namespace CastleGrimtol
+namespace ConsoleAdventure
 {
     public class Program
     {

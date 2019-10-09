@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using CastleGrimtol.Project.Models;
+using ConsoleAdventure.Project.Models;
 
-namespace CastleGrimtol.Project.Interfaces
+namespace ConsoleAdventure.Project.Interfaces
 {
     public interface IPlayer
     {
-        string PlayerName { get; set; }
+        string Name { get; set; }
         List<Item> Inventory { get; set; }
     }
 }

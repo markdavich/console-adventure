@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace CastleGrimtol.Project.Interfaces
+namespace ConsoleAdventure.Project.Interfaces
 {
     public interface IItem
     {

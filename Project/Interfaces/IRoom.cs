@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using CastleGrimtol.Project.Models;
+using ConsoleAdventure.Project.Models;
 
-namespace CastleGrimtol.Project.Interfaces
+namespace ConsoleAdventure.Project.Interfaces
 {
     public interface IRoom
     {

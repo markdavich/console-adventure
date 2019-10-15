@@ -1,0 +1,183 @@
+    // ┃┣━━━┳━━━━┳━━┓
+    // ┃┗┓┏┛┃╻╺━━┛╺┓┃
+    // ┣┓┃┗┓┗┻━━━┳╸┃┃
+    // ┃┃┣╸┣━━┳━┓┗━┛┃
+    // ┃┃┃┏┛┏╸┃╻┣━┳╸┃
+    // ┃┗━┫╻┣━━┫┗╸┃┏┫
+    // ┃┏━┫┃┃╺┓┗━┓┃┃┃
+    // ┃┃┃┃┃┗┓┗━┓┗┻╸┃
+    // ┗━┫┏┻━━━━┻━━━┛
+
+    ┏━═━┳━═━┓
+    ║   ╎   ║
+    ┣━╌━╋━╌━┫
+    ║   ╎   ║
+    ┗━═━┻━═━┛
+
+        START
+    ┏━═══━┳━═══━┓
+    ║  κ  ╎  μ  ║
+    ┣━╌╌╌━╋━╌╌╌━┫
+    ║  χ  ╎  γ  ║
+    ┗━═══━┻━═══━┛
+
+    +K = NO CHANGE
+    
+    YM = RED
+    YC = GREEN
+    MC = BLUE
+
+    χγ = GREEN
+    μχ = BLUE
+    γμ = RED
+
+    Keep Track of colors made.
+
+      When RGB
+
+FIRST MATCH (FIND SWITCH)
+  1.  RGB COLORS ARE DRAWN
+      ON THE BACKGROUND
+
+  2.  WHEN SWITCH IS FLIPPED
+      BACKGROUND COLOR IS REMOVED
+      GREEN IS REPLACED BY YELLOW
+      THEN THE OUTTER DOORS ARE REDRAWN
+      ACCORDING TO THE RGB COLORS
+
+    ┏━╌╌╌━┳━╌╌╌━┓
+    ╎  γ  ║  χ  ╎
+    ┣━═══━╋━═══━┫
+    ╎  μ  ║  κ  ╎
+    ┗━╌╌╌━┻━╌╌╌━┛
+
+    ┏━╌╌╌━┳━╌╌╌━┓
+    ╎  R  ║  G  ╎
+    ┣━═══━╋━═══━┫
+    ╎  B  ║  κ  ╎
+    ┗━╌╌╌━┻━╌╌╌━┛
+
+    Y γ = YELLOW
+    C χ = CYAN
+    M μ = MAGENTA
+    K κ = BLACK
+
+    ┏━═══━┳━═══━┓
+    ║  R  ╎  G  ║
+    ┣━╌╌╌━╋━╌╌╌━┫
+    ║  B  ╎  κ  ║
+    ┗━═══━┻━═══━┛
+
+    K = YELLO
+
+   (SWITCH FLIPPED)
+  
+    ┏━═══━┳━═══━┓
+    ║  R  ╎  W  ║
+    ┣━╌╌╌━╋━╌╌╌━┫
+    ║  B  ╎  Y  ║
+    ┗━═══━┻━═══━┛
+
+
+    μ
+
+    υ
+
+    κ
+
+    Y γ = YELLOW
+    C χ = CYAN
+    M μ = MAGENTA
+    K κ = BLACK
+
+    CharMap.Add('┏', '┏');
+    CharMap.Add('━', '━');
+    CharMap.Add('H', '═');
+    CharMap.Add('┳', '┳');
+    CharMap.Add('┓', '┓');
+    CharMap.Add('V', '║');
+    CharMap.Add(' ', ' ');
+    CharMap.Add('v', '╎');
+    CharMap.Add('┣', '┣');
+    CharMap.Add('h', '╌');
+    CharMap.Add('╋', '╋');
+    CharMap.Add('┫', '┫');
+    CharMap.Add('┗', '┗');
+    CharMap.Add('┻', '┻');
+    CharMap.Add('┛', '┛');
+    CharMap.Add('a', ' ');
+    CharMap.Add('b', ' ');
+    CharMap.Add('c', ' ');
+    CharMap.Add('d', ' ');
+
+    RoomsMap
+┏━HHH━┳━HHH━┓
+V b2b v c3c V
+┣━hhh━╋━hhh━┫
+V a1a v d4d V
+┗━HHH━┻━HHH━┛
+
+
+Drawing Rooms
+
+RoomPostionTemplate
+    0123456
+    ┏━═══━┳━═══━┓ 0
+    ║  1  ╎  2  ║ 1
+    ┣━╌╌╌━╋━╌╌╌━┫ 2
+    ║  3  ╎  4  ║ 3
+    ┗━═══━┻━═══━┛ 4
+
+RoomTemplate Base
+    ┏━═══━┳━═══━┓
+    ║  κ  ╎  μ  ║
+    ┣━╌╌╌━╋━╌╌╌━┫
+    ║  χ  ╎  γ  ║
+    ┗━═══━┻━═══━┛
+
+RoomPostionMap Dictionary
+RoomPostionTemplate Array
+RoomTemplate Array
+
+Loop the RoomPostionTemplate
+    for (row = 0; row < 3; row ++)
+    {
+        for (column = 0; column < 7; column ++)
+        {
+            @ Position 1
+            RowLookupOffset = 0;
+            ColLookupOffset = 0;
+
+            RoomTemplate = RoomPostionMap[Postion];
+            
+        }
+
+        for (column = 7; column < 13; column ++)
+        {
+            @ Position 2
+            RowLookupOffset = 0;
+            ColLookupOffset = 7;
+        }
+    }
+
+    for (row = 3; row < 5; row ++)
+    {
+        for (column = 0; column < 7; column ++)
+        {
+            @ Position 3
+            RowLookupOffset = -2;
+            ColLookupOffset = 0;
+        }
+
+        for (column = 7; column < 13; column ++)
+        {
+            @ Position 4
+            RowLookupOffset = -2;
+            ColLookupOffset = 7;
+        }
+    }
+
+    The row and column is used
+    to determine which RoomTemplate
+    to use.
+

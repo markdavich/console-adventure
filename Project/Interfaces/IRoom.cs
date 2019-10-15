@@ -1,5 +1,10 @@
+using System;
 using System.Collections.Generic;
 using ConsoleAdventure.Project.Models;
+
+using RoomPosition = ConsoleAdventure.Types.RoomPostion;
+using RoomIdentifier = ConsoleAdventure.Types.RoomIdentifier;
+using static ConsoleAdventure.Types;
 
 namespace ConsoleAdventure.Project.Interfaces
 {

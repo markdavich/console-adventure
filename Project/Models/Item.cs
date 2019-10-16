@@ -154,8 +154,7 @@ namespace ConsoleAdventure.Project.Models
   ┃     λ ≈ 1.303                  ┃
   ┃     δ ≈ 4.669                  ┃
   ┃     ψ ≈ 3.3598856662           ┃
-  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
-";
+  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛";
 
     public override PrintInstructions UseMessage
     {
@@ -186,19 +185,35 @@ namespace ConsoleAdventure.Project.Models
 
     public Calculator() : base("Calculator", "🖩", ConsoleColor.DarkGray)
     {
-      //              Phi:    ϕ = (1 + √5) / 2 = 1.618
-      //       Archimedes:    π = 3.141
-      // Euler's Constant:    e = Eul 2.718
-      //       Pythagoras:   √2 = 1.414
-      // Apéry's Constant: ζ(3) = 1.202
-      //           Conway:    λ = 1.303
-      //       Feigenbaum:    δ = 4.669
-      //        Fibonacci:    ψ = 3.3598856662
+      //                  Phi:    ϕ = (1 + √5) / 2 = 1.618
+      //           Archimedes:    π = 3.141
+      //     Euler's Constant:    e = Eul 2.718
+      //           Pythagoras:   √2 = 1.414
+      //     Apéry's Constant: ζ(3) = 1.202
+      //               Conway:    λ = 1.303
+      //           Feigenbaum:    δ = 4.669
+      // Reciprocal Fibonacci:    ψ = 3.3598856662
     }
   }
 
   public class KeyPadLock : NonTakeable
   {
+    public const string KeyPadText = @"
+  ╔═════════════════════════╗
+  ║                         ║
+  ║           __       __   ║
+  ║  /|        _)      __)  ║
+  ║   |       /__      __)  ║
+  ║            __       _   ║
+  ║  |_|      |_       |_   ║
+  ║    |      __)      |_)  ║
+  ║   __       _        _   ║
+  ║    /      (_)      (_|  ║
+  ║   /       (_)       _|  ║
+  ║            _            ║
+  ║           / \           ║
+  ║           \_/           ║
+  ╚═════════════════════════╝ ";
     private Dictionary<Lock.Key, int> Values = new Dictionary<Lock.Key, int>()
     {
       { Lock.Key.Phi, 1618 },
@@ -210,6 +225,36 @@ namespace ConsoleAdventure.Project.Models
       { Lock.Key.Fibonacci, 3360 },
       { Lock.Key.Apéry, 1202 }
     };
+
+    public PrintInstructions Display
+    {
+      get
+      {
+        PrintInstructions pi = new PrintInstructions() { };
+        string hint = Enum.GetName(typeof(Lock.Key), Key);
+
+        int leadingSpaces = (25 - hint.Length) / 2;
+        int trailingSpaces = 25 - leadingSpaces - hint.Length;
+
+
+        string[] lines = KeyPadText.Split('\n');
+        pi.Add(new PrintInstruction() { new ConsoleParams(lines[0], Color) });
+        pi.Add(new PrintInstruction() { });
+        pi[1].Add(new ConsoleParams("  ║", Color));
+        pi[1].Add(new ConsoleParams(new String(' ', leadingSpaces)));
+        pi[1].Add(new ConsoleParams(hint, ConsoleColor.DarkRed));
+        pi[1].Add(new ConsoleParams(new String(' ', trailingSpaces)));
+        pi[1].Add(new ConsoleParams("║", Color));
+
+        for (int i = 2; i < lines.Length; i++)
+        {
+          pi.Add(new PrintInstruction() { new ConsoleParams(lines[i], Color) });
+        }
+
+
+        return pi;
+      }
+    }
 
     public Lock.Key Key { get; private set; }
 
@@ -226,7 +271,7 @@ namespace ConsoleAdventure.Project.Models
       return code == Values[Key];
     }
 
-    public KeyPadLock() : base("Numeric Key Pad Lock", "🔒", ConsoleColor.Red)
+    public KeyPadLock(ConsoleColor color) : base("Numeric Key Pad Lock", "🔒", color)
     {
       Random random = new Random();
       Key = (Lock.Key)(

@@ -51,6 +51,9 @@ namespace ConsoleAdventure.Project.Controllers
         case "use":
           _gameService.UseItem(option);
           break;
+        case "put":
+          _gameService.Put(option);
+          break;
         default:
           Console.WriteLine("Enter a valid command");
           break;

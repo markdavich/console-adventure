@@ -12,7 +12,7 @@ namespace ConsoleAdventure
     public enum RoomPostion { One, Two, Three, Four }
     public enum Rotation { Clockwise, CounterClockwise, None }
     public enum FlipDirection { Vertical, Horizontal, None }
-    public enum RoomIdentifier { A, B, C, D };
+    public enum RoomIdentifier { A, B, C, D, None };
 
     public enum ColorState { CMYK, RGBK, RYBW };
 

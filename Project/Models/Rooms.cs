@@ -15,6 +15,8 @@ using PrintInstruction = System.Collections.Generic.List<ConsoleAdventure.Models
 using PrintInstructions = System.Collections.Generic.List<System.Collections.Generic.List<ConsoleAdventure.Models.ConsoleParams>>;
 using DoorState = ConsoleAdventure.Types.DoorState;
 
+using RoomPositions = System.Collections.Generic.Dictionary<ConsoleAdventure.Types.RoomPostion, ConsoleAdventure.Models.BaseRoom>;
+
 using System;
 using ConsoleAdventure.Project.Models;
 
@@ -23,6 +25,97 @@ delegate ConsoleAdventure.Models.ConsoleParams ConsoleParamsDelegate(char c, int
 
 namespace ConsoleAdventure.Models
 {
+  public class LockState
+  {
+    public bool Locked { get; set; } = false;
+
+    public RoomIdentifier LockedRoomId { get; set; } = RoomIdentifier.None;
+
+    public Direction LockedDoorDirection { get; set; } = Direction.None;
+
+    public RoomIdentifier KeyPadRoomId { get; set; } = RoomIdentifier.None;
+
+    public Direction KeyPadDoorDirection { get; set; } = Direction.None;
+
+    private Rooms _rooms {get; set;}
+
+    public void Lock()
+    {
+      if (Locked)
+      {
+        return;
+      }
+
+      Random random = new Random();
+      int enter = random.Next(0, 2);
+      int a;
+      int b;
+
+      switch (enter)
+      {
+        case 0: // 1 in three chance
+          a = random.Next(0, 2);
+          b = random.Next(0, 2);
+          Locked = a == b;
+          break;
+
+        case 1: // 1 in six chance (Roll the dice)
+          a = random.Next(0, 5);
+          b = random.Next(0, 5);
+          Locked = a == b;
+          break;
+
+        case 2: // 1 in 10 chance
+          a = random.Next(0, 9);
+          b = random.Next(0, 9);
+          Locked = a == b;
+          break;
+      }
+
+      if (!Locked)
+      {
+        return;
+      }
+
+      int roomNumber = random.Next(0, 3);
+
+      RoomPosition roomPosition = (RoomPosition)roomNumber;
+
+      int coin = random.Next(0, 1);
+
+      Direction doorDirection;
+
+      switch (roomPosition)
+      {
+        case RoomPosition.One:
+          doorDirection = coin == 1 ? Direction.South : Direction.East;
+          break;
+        case RoomPosition.Two:
+          doorDirection = coin == 1 ? Direction.South : Direction.West;
+          break;
+        case RoomPosition.Three:
+          doorDirection = coin == 1 ? Direction.North : Direction.East;
+          break;
+        case RoomPosition.Four:
+          doorDirection = coin == 1 ? Direction.North : Direction.West;
+          break;
+        default:
+          doorDirection = Direction.East;
+          break;
+      }
+
+      LockedRoomId = _rooms. RoomPositions[roomPosition].Id;
+      LockedDoorDirection = doorDirection;
+
+      KeyPadRoomId = _rooms.GetAdjoiningRoom(roomPosition, doorDirection).Id;
+      KeyPadDoorDirection = _rooms.GetOppisiteDirection(doorDirection);
+
+    }
+
+    public LockState(Rooms rooms){
+      _rooms = rooms;
+    }
+  }
   public class ColorPair
   {
     public ConsoleColor A { get; private set; }
@@ -271,6 +364,8 @@ namespace ConsoleAdventure.Models
     public Types.Level Level { get; set; } = Types.Level.One;
 
     public RoomPosition CurrentRoomPosition { get; set; } = RoomPosition.Three;
+
+
 
     public DoorState DoorLockState(RoomPosition position, Direction direction)
     {
@@ -545,7 +640,7 @@ namespace ConsoleAdventure.Models
       return result;
     }
 
-    public static Dictionary<RoomPosition, BaseRoom> RoomPositions { get; set; } = new Dictionary<RoomPosition, BaseRoom>();
+    public RoomPositions RoomPositions { get; set; } = new RoomPositions();
 
     // NOTE: I tried this for the DeligateMap but everything went static...
     // private static ConsoleParamsDelegate Copy = delegate (char c, int row, int col, RoomPosition pos)
@@ -869,7 +964,7 @@ namespace ConsoleAdventure.Models
 
       for (row = 0; row < 3; row++)
       {
-        result.Add(new List<ConsoleParams>());
+        result.Add(new List<ConsoleParams>() { new ConsoleParams(spaces) });
 
         for (col = 0; col < 7; col++)
         {
@@ -892,7 +987,7 @@ namespace ConsoleAdventure.Models
 
       for (row = 3; row < 5; row++)
       {
-        result.Add(new List<ConsoleParams>());
+        result.Add(new List<ConsoleParams>() { new ConsoleParams(spaces) });
 
         for (col = 0; col < 7; col++)
         {

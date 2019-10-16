@@ -4,12 +4,17 @@ using ConsoleAdventure.Project.Models;
 using System.Globalization;
 using System;
 using ConsoleAdventure.Models;
+using PrintInstruction = System.Collections.Generic.List<ConsoleAdventure.Models.ConsoleParams>;
 using PrintInstructions = System.Collections.Generic.List<System.Collections.Generic.List<ConsoleAdventure.Models.ConsoleParams>>;
 
 namespace ConsoleAdventure.Project
 {
   public class GameService : IGameService
   {
+    public enum Noun { Calculator }
+
+    public enum Verb { Away }
+
     public bool EasyMode { get; private set; }
 
     private void _setEasyMode(string userName)
@@ -35,25 +40,67 @@ namespace ConsoleAdventure.Project
     public PrintInstructions PrintInstructions { get; set; } = new PrintInstructions();
 
     public PrintInstructions MoveInstructions { get; set; } = new PrintInstructions();
+
     public GameService(string userName, ConsoleColor favoriteColor)
     {
       _rooms = new Rooms();
       _game = new Game(userName, favoriteColor);
       _setEasyMode(userName);
       Messages = new List<string>();
+      SetPrintInstructions();
     }
+
     public void Go(string direction)
     {
       Types.Direction directionEnum;
       if (Enum.TryParse(_textInfo.ToTitleCase(direction), out directionEnum))
       {
-        // MoveResults results = _rooms.MovePlayer(directionEnum);
-        // MoveInstructions = results.PrintInstructions;
-
         SetPrintInstructions(_rooms.MovePlayer(directionEnum).PrintInstructions);
-        // _rooms.RotateRooms(Types.RoomPostion.One, directionEnum);
       }
     }
+
+    internal void Put(string option)
+    {
+      string noun = option.Substring(0, option.IndexOf(" "));
+      string verb = option.Substring(option.IndexOf(" ") + 1).Trim();
+
+      Noun nounEnum;
+      Verb verbEnum;
+
+      PrintInstructions pi = new PrintInstructions() { new PrintInstruction() };
+
+      if (Enum.TryParse(_textInfo.ToTitleCase(noun), out nounEnum))
+      {
+        if (Enum.TryParse(_textInfo.ToTitleCase(verb), out verbEnum))
+        {
+          switch (nounEnum)
+          {
+            case Noun.Calculator:
+              switch (verbEnum)
+              {
+                case Verb.Away:
+                  pi[0].Add(new ConsoleParams("You turn the calculator off and put it in your pocket", ConsoleColor.DarkGreen));
+                  SetCalculator(false);
+                  SetPrintInstructions(pi);
+                  return;
+              }
+              break;
+          }
+        }
+        pi[0].Add(new ConsoleParams("You can't put the "));
+        pi[0].Add(new ConsoleParams(noun, ConsoleColor.DarkRed));
+        pi[0].Add(new ConsoleParams($" '{verb}' ", ConsoleColor.DarkRed));
+
+        SetPrintInstructions(pi);
+        return;
+      }
+      pi[0].Add(new ConsoleParams("There is no "));
+      pi[0].Add(new ConsoleParams($"'{noun}' ", ConsoleColor.DarkRed));
+      pi[0].Add(new ConsoleParams("to put "));
+      pi[0].Add(new ConsoleParams(verb, ConsoleColor.DarkRed));
+      SetPrintInstructions(pi);
+    }
+
     public void Help()
     {
       throw new System.NotImplementedException();
@@ -73,6 +120,7 @@ namespace ConsoleAdventure.Project
     {
       throw new System.NotImplementedException();
     }
+
     ///<summary>
     ///Restarts the game 
     ///</summary>
@@ -91,7 +139,7 @@ namespace ConsoleAdventure.Project
 
     public void SetPrintInstructions(PrintInstructions instructions = null)
     {
-      PrintInstructions = _rooms.PrintInstructions("", "");
+      PrintInstructions = _rooms.PrintInstructions("");
 
       PrintInstructions.Add(new List<ConsoleParams>() { new ConsoleParams(" ") });
 
@@ -111,10 +159,9 @@ namespace ConsoleAdventure.Project
         }
       }
 
-      PrintInstructions.Add(new List<ConsoleParams>() { new ConsoleParams(" ") });
-
       if (instructions != null)
       {
+        PrintInstructions.Add(new List<ConsoleParams>() { new ConsoleParams(" ") });
         instructions.ForEach(line =>
         {
           PrintInstructions.Add(line);
@@ -122,26 +169,11 @@ namespace ConsoleAdventure.Project
       }
     }
 
-    // public PrintInstructions PrintInstructions()
-    // {
-    //   PrintInstructions result = _rooms.PrintInstructions("", "");
-
-    //   result.Add(new List<ConsoleParams>() { new ConsoleParams(" ") });
-
-    //   int newIndex = result.Count;
-
-    //   MoveInstructions.ForEach(line =>
-    //   {
-    //     result.Add(line);
-    //   });
-
-    //   return result;
-    // }
-
     public void Setup(string playerName)
     {
       _rooms = new Rooms();
     }
+
     ///<summary>When taking an item be sure the item is in the current room before adding it to the player inventory, Also don't forget to remove the item from the room it was picked up in</summary>
     public void TakeItem(string itemName)
     {
@@ -153,6 +185,16 @@ namespace ConsoleAdventure.Project
       }
     }
 
+    public void SetCalculator(bool onOff)
+    {
+      if (PlayerHasItem("calculator"))
+      {
+        Calculator calculator = PlayerItem("calculator") as Calculator;
+        calculator.On = onOff;
+        SetPrintInstructions(calculator.UseMessage);
+      }
+    }
+
     private bool PlayerHasItem(string itemName)
     {
       return _game.CurrentPlayer.Inventory.Find(item =>
@@ -160,7 +202,6 @@ namespace ConsoleAdventure.Project
         return item.Name.ToLower() == itemName;
       }) != null;
     }
-
 
     private bool RoomHasItem(string itemName)
     {
@@ -190,9 +231,12 @@ namespace ConsoleAdventure.Project
         Item i = PlayerItem(itemName);
         if (i is Calculator)
         {
+
           (i as Calculator).On = true;
-          SetPrintInstructions((i as Calculator).UseMessage);
+          // SetPrintInstructions((i as Calculator).UseMessage);
+
         }
+        SetPrintInstructions();
         return;
       }
     }

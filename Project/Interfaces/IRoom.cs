@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using ConsoleAdventure.Project.Models;
 
-using RoomPosition = ConsoleAdventure.Types.RoomPostion;
+using RoomPosition = ConsoleAdventure.Types.RoomPosition;
 using RoomIdentifier = ConsoleAdventure.Types.RoomIdentifier;
 using static ConsoleAdventure.Types;
 

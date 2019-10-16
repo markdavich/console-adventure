@@ -9,7 +9,7 @@ namespace ConsoleAdventure
   public static class Types
   {
     public enum Direction { North, East, South, West, None }
-    public enum RoomPostion { One, Two, Three, Four }
+    public enum RoomPosition { One, Two, Three, Four, None }
     public enum Rotation { Clockwise, CounterClockwise, None }
     public enum FlipDirection { Vertical, Horizontal, None }
     public enum RoomIdentifier { A, B, C, D, None };

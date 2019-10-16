@@ -1,11 +1,6 @@
 using System;
-using System.Collections.Generic;
-using ConsoleAdventure.Models;
 using ConsoleAdventure.Project.Interfaces;
-using ConsoleAdventure.Project.Models;
 using ConsoleUtilities;
-using PrintInstructions = System.Collections.Generic.List<System.Collections.Generic.List<ConsoleAdventure.Models.ConsoleParams>>;
-using ConsoleAdventure;
 
 namespace ConsoleAdventure.Project.Controllers
 {
@@ -54,6 +49,9 @@ namespace ConsoleAdventure.Project.Controllers
         case "put":
           _gameService.Put(option);
           break;
+        case "unlock":
+          _gameService.Unlock(option);
+          break;
         default:
           Console.WriteLine("Enter a valid command");
           break;
@@ -70,9 +68,9 @@ namespace ConsoleAdventure.Project.Controllers
 
       Program.TitleController.DrawHeader();
 
-      _gameService.PrintInstructions.ForEach(set =>
+      _gameService.PrintInstructions.Lines.ForEach(line =>
       {
-        set.ForEach(instruction =>
+        line.Instructions.ForEach(instruction =>
         {
           log.Add(instruction.Text, instruction.Foreground, instruction.Background);
         });

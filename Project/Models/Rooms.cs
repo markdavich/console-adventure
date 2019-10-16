@@ -1,121 +1,25 @@
 using System.Collections.Generic;
-using ConsoleAdventure.Project.Interfaces;
 
-// using RoomPositions = System.Collections.Generic.Dictionary<ConsoleAdventure.Types.RoomPostion, ConsoleAdventure.Project.Interfaces.BaseRoom>;
 using Direction = ConsoleAdventure.Types.Direction;
 using Rotation = ConsoleAdventure.Types.Rotation;
 using FlipDirection = ConsoleAdventure.Types.FlipDirection;
-using RoomPosition = ConsoleAdventure.Types.RoomPostion;
-// using ConsoleParamsDelegate = System.Func<System.Char, System.Int32, System.Int32, ConsoleAdventure.Types.RoomPostion, ConsoleAdventure.Models.ConsoleParams>;
+using RoomPosition = ConsoleAdventure.Types.RoomPosition;
 using RoomIdentifier = ConsoleAdventure.Types.RoomIdentifier;
 using RoomTemplates = System.Collections.Generic.Dictionary<ConsoleAdventure.Types.RoomIdentifier, char[][]>;
 using RoomColors = System.Collections.Generic.Dictionary<ConsoleAdventure.Types.RoomIdentifier, System.ConsoleColor>;
-
-using PrintInstruction = System.Collections.Generic.List<ConsoleAdventure.Models.ConsoleParams>;
-using PrintInstructions = System.Collections.Generic.List<System.Collections.Generic.List<ConsoleAdventure.Models.ConsoleParams>>;
 using DoorState = ConsoleAdventure.Types.DoorState;
-
-using RoomPositions = System.Collections.Generic.Dictionary<ConsoleAdventure.Types.RoomPostion, ConsoleAdventure.Models.BaseRoom>;
-
+using RoomPositions = System.Collections.Generic.Dictionary<ConsoleAdventure.Types.RoomPosition, ConsoleAdventure.Models.BaseRoom>;
 using System;
 using ConsoleAdventure.Project.Models;
+using ConsoleAdventure.Classes;
+using System.Text;
 
-delegate ConsoleAdventure.Models.ConsoleParams ConsoleParamsDelegate(char c, int row, int col, RoomPosition pos);
+delegate ConsoleAdventure.Classes.ConsoleParams ConsoleParamsDelegate(char c, int row, int col, RoomPosition pos);
 
 
 namespace ConsoleAdventure.Models
 {
-  public class LockState
-  {
-    public bool Locked { get; set; } = false;
 
-    public RoomIdentifier LockedRoomId { get; set; } = RoomIdentifier.None;
-
-    public Direction LockedDoorDirection { get; set; } = Direction.None;
-
-    public RoomIdentifier KeyPadRoomId { get; set; } = RoomIdentifier.None;
-
-    public Direction KeyPadDoorDirection { get; set; } = Direction.None;
-
-    private Rooms _rooms {get; set;}
-
-    public void Lock()
-    {
-      if (Locked)
-      {
-        return;
-      }
-
-      Random random = new Random();
-      int enter = random.Next(0, 2);
-      int a;
-      int b;
-
-      switch (enter)
-      {
-        case 0: // 1 in three chance
-          a = random.Next(0, 2);
-          b = random.Next(0, 2);
-          Locked = a == b;
-          break;
-
-        case 1: // 1 in six chance (Roll the dice)
-          a = random.Next(0, 5);
-          b = random.Next(0, 5);
-          Locked = a == b;
-          break;
-
-        case 2: // 1 in 10 chance
-          a = random.Next(0, 9);
-          b = random.Next(0, 9);
-          Locked = a == b;
-          break;
-      }
-
-      if (!Locked)
-      {
-        return;
-      }
-
-      int roomNumber = random.Next(0, 3);
-
-      RoomPosition roomPosition = (RoomPosition)roomNumber;
-
-      int coin = random.Next(0, 1);
-
-      Direction doorDirection;
-
-      switch (roomPosition)
-      {
-        case RoomPosition.One:
-          doorDirection = coin == 1 ? Direction.South : Direction.East;
-          break;
-        case RoomPosition.Two:
-          doorDirection = coin == 1 ? Direction.South : Direction.West;
-          break;
-        case RoomPosition.Three:
-          doorDirection = coin == 1 ? Direction.North : Direction.East;
-          break;
-        case RoomPosition.Four:
-          doorDirection = coin == 1 ? Direction.North : Direction.West;
-          break;
-        default:
-          doorDirection = Direction.East;
-          break;
-      }
-
-      LockedRoomId = _rooms. RoomPositions[roomPosition].Id;
-      LockedDoorDirection = doorDirection;
-
-      KeyPadRoomId = _rooms.GetAdjoiningRoom(roomPosition, doorDirection).Id;
-      KeyPadDoorDirection = _rooms.GetOppisiteDirection(doorDirection);
-
-    }
-
-    public LockState(Rooms rooms){
-      _rooms = rooms;
-    }
-  }
   public class ColorPair
   {
     public ConsoleColor A { get; private set; }
@@ -165,19 +69,6 @@ namespace ConsoleAdventure.Models
     public PrintInstructions PrintInstructions { get; set; } = new PrintInstructions();
 
     public DoorState DoorState { get; set; } = DoorState.Sealed;
-  }
-
-  public struct ConsoleParams
-  {
-    public string Text;
-    public ConsoleColor Foreground, Background;
-
-    public ConsoleParams(string text, ConsoleColor foreground = ConsoleColor.White, ConsoleColor background = Types.BACKGROUND_COLOR)
-    {
-      Text = text;
-      Foreground = foreground;
-      Background = background;
-    }
   }
 
   public struct RoomInfo
@@ -365,10 +256,15 @@ namespace ConsoleAdventure.Models
 
     public RoomPosition CurrentRoomPosition { get; set; } = RoomPosition.Three;
 
-
+    public Classes.Lock Lock { get; set; }
 
     public DoorState DoorLockState(RoomPosition position, Direction direction)
     {
+      if (Lock.DoorIsLocked(position, direction))
+      {
+        return Types.DoorState.Locked;
+      }
+
       return Types.DoorState.Open;
     }
 
@@ -418,11 +314,33 @@ namespace ConsoleAdventure.Models
 
       return state;
     }
+
+
+    public PrintInstructions MergedDescription()
+    {
+      PrintInstructions result = new PrintInstructions();
+
+      if (FullyMerged())
+      {
+        result.NewLine("Woah! WHAT IS GOING ON???");
+        result.NewLine("The transdimensional waves have aligned!");
+        result.NewLine("You are experiencing the ")
+          .Add(RoomInfo[RoomIdentifier.A].Character.ToString(), RoomColors[RoomIdentifier.A])
+          .Add(RoomInfo[RoomIdentifier.D].Character.ToString(), RoomColors[RoomIdentifier.D])
+          .Add(RoomInfo[RoomIdentifier.C].Character.ToString(), RoomColors[RoomIdentifier.C])
+          .Add(RoomInfo[RoomIdentifier.B].Character.ToString(), RoomColors[RoomIdentifier.B])
+          .Add(" intermodultion... Noice!");
+        result.NewLine();
+      }
+
+      return result;
+    }
+
     public MoveResults MoveResults(Direction direction)
     {
       MoveResults result = new MoveResults();
+      PrintInstructions pi = result.PrintInstructions;
 
-      result.PrintInstructions.Add(new List<ConsoleParams>());
       result.Success = false;
       result.DoorState = DoorState(direction);
 
@@ -436,16 +354,16 @@ namespace ConsoleAdventure.Models
           break;
       }
 
-      result.PrintInstructions[0].Add(new ConsoleParams("The "));
-      result.PrintInstructions[0].Add(new ConsoleParams($"{direction}", GetDoorColor(CurrentRoomPosition, direction)));
+      pi.NewLine("The ")
+        .Add($"{direction}", GetDoorColor(CurrentRoomPosition, direction));
 
       if (result.Success)
       {
-        result.PrintInstructions[0].Add(new ConsoleParams($" door was {result.DoorState}"));
+        pi.Add($" door was {result.DoorState}");
       }
       else
       {
-        result.PrintInstructions[0].Add(new ConsoleParams($" door is {result.DoorState}"));
+        pi.Add($" door is {result.DoorState}");
       }
 
       return result;
@@ -521,57 +439,34 @@ namespace ConsoleAdventure.Models
     {
       PrintInstructions result = new PrintInstructions();
 
-      PrintInstruction pi = new PrintInstruction();
+      result.NewLine("You are in the ")
+        .Add(RoomInfo[CurrentRoom.Id].Name, CurrentRoom.Color)
+        .Add($" ({RoomInfo[CurrentRoom.Id].Character}) Room");
 
-      pi.Add(new ConsoleParams("You are in the "));
-      pi.Add(new ConsoleParams(RoomInfo[CurrentRoom.Id].Name, CurrentRoom.Color));
-      pi.Add(new ConsoleParams($" ({RoomInfo[CurrentRoom.Id].Character}) Room"));
-
-      result.Add(pi);
-
-      result.Add(new PrintInstruction() { new ConsoleParams(" ") });
-
-      result.Add(new PrintInstruction() { new ConsoleParams("Exits:") });
+      result.NewLine();
+      result.NewLine("Exits:");
 
       ConsoleColor northDoor = GetDoorColor(CurrentRoomPosition, Direction.North);
       ConsoleColor eastDoor = GetDoorColor(CurrentRoomPosition, Direction.East);
       ConsoleColor southDoor = GetDoorColor(CurrentRoomPosition, Direction.South);
       ConsoleColor westDoor = GetDoorColor(CurrentRoomPosition, Direction.West);
 
-      pi = new PrintInstruction();
-      pi.Add(new ConsoleParams($"    {northDoor}", northDoor));
-      pi.Add(new ConsoleParams(" door to the North"));
-      result.Add(pi);
-
-      pi = new PrintInstruction();
-      pi.Add(new ConsoleParams($"    {eastDoor}", eastDoor));
-      pi.Add(new ConsoleParams(" door to the East"));
-      result.Add(pi);
-
-      pi = new PrintInstruction();
-      pi.Add(new ConsoleParams($"    {southDoor}", southDoor));
-      pi.Add(new ConsoleParams(" door to the South"));
-      result.Add(pi);
-
-      pi = new PrintInstruction();
-      pi.Add(new ConsoleParams($"    {westDoor}", westDoor));
-      pi.Add(new ConsoleParams(" door to the West"));
-      result.Add(pi);
-
-      result.Add(new PrintInstruction() { new ConsoleParams(" ") });
+      result.NewLine($"    {northDoor}", northDoor).Add(" door to the North");
+      result.NewLine($"    {eastDoor}", eastDoor).Add(" door to the East");
+      result.NewLine($"    {southDoor}", southDoor).Add(" door to the South");
+      result.NewLine($"    {westDoor}", westDoor).Add(" door to the West");
+      result.NewLine();
 
       if (CurrentRoom.Items.Count == 0)
       {
-        result.Add(new PrintInstruction() { new ConsoleParams("The Room is empty") });
+        result.NewLine("The Room is empty");
       }
       else
       {
-        result.Add(new PrintInstruction() { new ConsoleParams("Items in the room") });
+        result.NewLine("Items in the room");
         CurrentRoom.Items.ForEach(item =>
         {
-          pi = item.ItemDescription;
-          pi.Insert(0, new ConsoleParams("    "));
-          result.Add(pi);
+          result.NewLine("    ").Add(item.ItemDescription);
         });
       }
 
@@ -584,7 +479,7 @@ namespace ConsoleAdventure.Models
 
       if (result.Success)
       {
-        if (FullyMerged())
+        if (FullyMerged() || Lock.Locked)
         {
           CurrentRoomPosition = GetAdjoiningRoomPosition(CurrentRoomPosition, direction);
         }
@@ -629,13 +524,17 @@ namespace ConsoleAdventure.Models
 
       if (result.Success)
       {
-        int newIndex = result.PrintInstructions.Count;
         BaseRoom room = RoomPositions[CurrentRoomPosition];
-        result.PrintInstructions.Add(new List<ConsoleParams>());
-        result.PrintInstructions[newIndex].Add(new ConsoleParams("You enter the ", ConsoleColor.DarkGreen));
-        result.PrintInstructions[newIndex].Add(new ConsoleParams(RoomInfo[room.Id].Name, room.Color));
-        result.PrintInstructions[newIndex].Add(new ConsoleParams(" room.", ConsoleColor.DarkGreen));
+        result.PrintInstructions.NewLine("You enter the ", ConsoleColor.DarkGreen)
+          .Add(RoomInfo[room.Id].Name, room.Color)
+          .Add(" room.", ConsoleColor.DarkGreen);
       }
+
+      PrintInstructions mergedMessage = MergedDescription();
+
+      mergedMessage.AddInstructions(result.PrintInstructions);
+
+      result.PrintInstructions = mergedMessage;
 
       return result;
     }
@@ -964,7 +863,7 @@ namespace ConsoleAdventure.Models
 
       for (row = 0; row < 3; row++)
       {
-        result.Add(new List<ConsoleParams>() { new ConsoleParams(spaces) });
+        result.NewLine(spaces);
 
         for (col = 0; col < 7; col++)
         {
@@ -972,7 +871,7 @@ namespace ConsoleAdventure.Models
           position = RoomPosition.One;
           // rowOffset = 0;
           // colOffset = 0;
-          result[row].Add(DeligateMap[c](c, row, col, position));
+          result.Add(DeligateMap[c](c, row, col, position));
         }
 
         for (col = 7; col < 13; col++)
@@ -981,13 +880,13 @@ namespace ConsoleAdventure.Models
           position = RoomPosition.Two;
           // rowOffset = 0;
           colOffset = 6;
-          result[row].Add(DeligateMap[c](c, row, col - colOffset, position));
+          result.Add(DeligateMap[c](c, row, col - colOffset, position));
         }
       }
 
       for (row = 3; row < 5; row++)
       {
-        result.Add(new List<ConsoleParams>() { new ConsoleParams(spaces) });
+        result.NewLine(spaces);
 
         for (col = 0; col < 7; col++)
         {
@@ -995,7 +894,7 @@ namespace ConsoleAdventure.Models
           position = RoomPosition.Three;
           rowOffset = 2;
           // colOffset = 0;
-          result[row].Add(DeligateMap[c](c, row - rowOffset, col, position));
+          result.Add(DeligateMap[c](c, row - rowOffset, col, position));
         }
 
         for (col = 7; col < 13; col++)
@@ -1004,7 +903,7 @@ namespace ConsoleAdventure.Models
           position = RoomPosition.Four;
           rowOffset = 2;
           colOffset = 6;
-          result[row].Add(DeligateMap[c](c, row - rowOffset, col - colOffset, position));
+          result.Add(DeligateMap[c](c, row - rowOffset, col - colOffset, position));
         }
       }
 
@@ -1055,6 +954,7 @@ namespace ConsoleAdventure.Models
     public Rooms()
     {
       _setup();
+      Lock = new Classes.Lock(this);
     }
 
   }

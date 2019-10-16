@@ -37,7 +37,7 @@ namespace ConsoleAdventure.Models
         return _templates[Id];
       }
     }
-    public Types.RoomPostion RoomPosition { get; set; }
+    public Types.RoomPosition RoomPosition { get; set; }
     public Types.RoomIdentifier Id { get; set; }
     // public string Name { get; set; }
     // public string Description { get; set; }

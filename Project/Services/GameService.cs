@@ -4,14 +4,15 @@ using ConsoleAdventure.Project.Models;
 using System.Globalization;
 using System;
 using ConsoleAdventure.Models;
-using PrintInstruction = System.Collections.Generic.List<ConsoleAdventure.Models.ConsoleParams>;
-using PrintInstructions = System.Collections.Generic.List<System.Collections.Generic.List<ConsoleAdventure.Models.ConsoleParams>>;
+using ConsoleAdventure.Classes;
+using static ConsoleAdventure.Types;
+using ConsoleUtilities;
 
 namespace ConsoleAdventure.Project
 {
   public class GameService : IGameService
   {
-    public enum Noun { Calculator }
+    public enum Noun { Calculator, Door }
 
     public enum Verb { Away }
 
@@ -55,7 +56,226 @@ namespace ConsoleAdventure.Project
       Types.Direction directionEnum;
       if (Enum.TryParse(_textInfo.ToTitleCase(direction), out directionEnum))
       {
+        if (!EasyMode)
+        {
+          _rooms.Lock.Set();
+        }
         SetPrintInstructions(_rooms.MovePlayer(directionEnum).PrintInstructions);
+      }
+    }
+
+    internal void Unlock(string option)
+    {
+      PrintInstructions pi = new PrintInstructions();
+      string[] options = option.Trim().Split(" ");
+      string direction;
+      string noun;
+
+      if (options[0] == "")
+      {
+        pi.Add("What did you want to unlock?", ConsoleColor.Blue);
+        SetPrintInstructions(pi);
+        return;
+      }
+
+      if (options.Length < 2)
+      {
+        direction = options[0];
+        noun = "";
+      }
+      else
+      {
+        direction = options[0];
+        noun = options[1];
+      }
+
+      Noun nounEnum;
+      Direction directionEnum;
+
+      // Check for direction
+      if (Enum.TryParse(_textInfo.ToTitleCase(direction), out directionEnum))
+      {
+        // Check the noun
+        if (Enum.TryParse(_textInfo.ToTitleCase(noun), out nounEnum))
+        {
+          switch (nounEnum)
+          {
+            case Noun.Door:
+              // They have given us a valid direction and "Door"
+              if (_rooms.Lock.DoorIsLocked(_rooms.CurrentRoomPosition, directionEnum))
+              {
+                UnlockDoor();
+                return;
+                // Ok This door is locked
+              }
+              else
+              {
+                pi.Add($"The {directionEnum} is not locked", ConsoleColor.Blue);
+                SetPrintInstructions(pi);
+                return;
+              }
+            default:
+              // We dont have anything else to unlock at this direction
+              pi.Add($"There is no {directionEnum} {nounEnum} to Unlock");
+              SetPrintInstructions(pi);
+              return;
+          }
+        }
+        // We were given a valid direction but an invalid noun
+        pi.Add($"There is no {directionEnum} {noun} to Unlock");
+        SetPrintInstructions(pi);
+        return;
+      }
+      else if (Enum.TryParse(_textInfo.ToTitleCase(direction), out nounEnum)) // Check for a noun in the direction place
+      {
+        switch (nounEnum)
+        {
+          case Noun.Door:
+            // Which door???
+            pi.Add($"Which {nounEnum} did you want to unlock?", ConsoleColor.Blue);
+            pi.NewLine($"Did you mean 'unlock [north|east|south|west] door'?", ConsoleColor.Blue);
+            SetPrintInstructions(pi);
+            return;
+          case Noun.Calculator:
+            // The calculator is unlocked...
+            if (PlayerHasItem(noun.ToLower()))
+            {
+              pi.Add("The calculator is unlocked", ConsoleColor.DarkGreen);
+              SetPrintInstructions(pi);
+              return;
+            }
+            else
+            {
+              pi.Add("You don't have a calculator to unlock", ConsoleColor.DarkRed);
+              SetPrintInstructions(pi);
+              return;
+            }
+          default:
+            pi.Add($"There is no '{noun}' to unlock", ConsoleColor.DarkRed);
+            SetPrintInstructions(pi);
+            return;
+        }
+      }
+      else
+      {
+        // We were given an unknown noun and direction
+        pi.Add($"There is no '{option}' to unlock", ConsoleColor.DarkRed);
+        SetPrintInstructions(pi);
+        return;
+      }
+    }
+
+    private void UnlockDoor()
+    {
+      bool trying = true;
+
+      KeyPadLock kpl = _rooms.CurrentRoom.FindItem(KeyPadLock.KeyPadName) as KeyPadLock;
+
+      string msg = "";
+
+      while (trying)
+      {
+        // Print Title
+        // Print Rooms
+        // Print KeyPad
+
+        Console.Clear();
+        Log log = new Log();
+
+        PrintInstructions calcPrintInstructions = null;
+
+        // Print Title
+        Program.TitleController.DrawHeader();
+
+        // Print Rooms
+        _rooms.PrintInstructions("").Lines.ForEach(line =>
+        {
+          line.Instructions.ForEach(instruction =>
+          {
+            log.Add(instruction.Text, instruction.Foreground, instruction.Background);
+          });
+          log.Print();
+        });
+
+        Calculator calc = _game.CurrentPlayer.Inventory.Find(item =>
+        {
+          return item is Calculator;
+        }) as Calculator;
+
+        if (calc != null)
+        {
+          if (calc.On)
+          {
+
+            calcPrintInstructions = calc.Display;
+          }
+        }
+
+        PrintInstructions unlockInstructions = new PrintInstructions().AddInstructions(kpl.Display);
+
+        if (calcPrintInstructions != null)
+        {
+          unlockInstructions.RightJoin(calcPrintInstructions);
+        }
+
+        unlockInstructions.NewLine(msg, ConsoleColor.DarkRed);
+
+        unlockInstructions.Lines.ForEach(line =>
+        {
+          line.Instructions.ForEach(instruction =>
+          {
+            log.Add(instruction.Text, instruction.Foreground, instruction.Background);
+          });
+          log.Print();
+        });
+
+        log.NewLine();
+
+        log.Add("Enter the ");
+        log.Add("code", ConsoleColor.DarkRed);
+        log.Add(" to unlock the door (type 'quit' to stop trying)");
+        log.Print();
+
+        string userInput = Console.ReadLine();
+
+        if (userInput.ToLower().Trim() == "quit")
+        {
+          SetPrintInstructions(new PrintInstructions("You couldn't unlock the door", ConsoleColor.DarkRed));
+          return;
+        }
+
+        if (userInput == "use calculator")
+        {
+          SetCalculator(true);
+          continue;
+        }
+
+        try
+        {
+          int numVal = Int32.Parse(userInput.Substring(0, 5));
+
+          bool unlocked = kpl.Unlock(numVal);
+
+          if (unlocked)
+          {
+            Classes.Lock lk = _rooms.Lock;
+            calcPrintInstructions = new PrintInstructions();
+            calcPrintInstructions.NewLine("You Unlocked the ")
+              .Add($"{lk.KeyPadDoorDirection}", _rooms.GetDoorColor(lk.KeyPadRoomPosition, lk.KeyPadDoorDirection))
+              .Add(" DOOR!!!");
+            calcPrintInstructions.NewLine("NICE JOB!!!", ConsoleColor.Green);
+            lk.Unlock();
+            return;
+          }
+          else
+          {
+            msg = $"  '{userInput}' does not unlock the door. Good try though.";
+          }
+        }
+        catch (FormatException e)
+        {
+          msg = $"  '{userInput}' does not unlock the door";
+        }
       }
     }
 
@@ -67,7 +287,7 @@ namespace ConsoleAdventure.Project
       Noun nounEnum;
       Verb verbEnum;
 
-      PrintInstructions pi = new PrintInstructions() { new PrintInstruction() };
+      PrintInstructions pi = new PrintInstructions();
 
       if (Enum.TryParse(_textInfo.ToTitleCase(noun), out nounEnum))
       {
@@ -79,7 +299,7 @@ namespace ConsoleAdventure.Project
               switch (verbEnum)
               {
                 case Verb.Away:
-                  pi[0].Add(new ConsoleParams("You turn the calculator off and put it in your pocket", ConsoleColor.DarkGreen));
+                  pi.Add("You turn the calculator off and put it in your pocket", ConsoleColor.DarkGreen);
                   SetCalculator(false);
                   SetPrintInstructions(pi);
                   return;
@@ -87,17 +307,17 @@ namespace ConsoleAdventure.Project
               break;
           }
         }
-        pi[0].Add(new ConsoleParams("You can't put the "));
-        pi[0].Add(new ConsoleParams(noun, ConsoleColor.DarkRed));
-        pi[0].Add(new ConsoleParams($" '{verb}' ", ConsoleColor.DarkRed));
+        pi.Add("You can't put the ");
+        pi.Add(noun, ConsoleColor.DarkRed);
+        pi.Add($" '{verb}' ", ConsoleColor.DarkRed);
 
         SetPrintInstructions(pi);
         return;
       }
-      pi[0].Add(new ConsoleParams("There is no "));
-      pi[0].Add(new ConsoleParams($"'{noun}' ", ConsoleColor.DarkRed));
-      pi[0].Add(new ConsoleParams("to put "));
-      pi[0].Add(new ConsoleParams(verb, ConsoleColor.DarkRed));
+      pi.Add("There is no ");
+      pi.Add($"'{noun}' ", ConsoleColor.DarkRed);
+      pi.Add("to put ");
+      pi.Add(verb, ConsoleColor.DarkRed);
       SetPrintInstructions(pi);
     }
 
@@ -141,8 +361,6 @@ namespace ConsoleAdventure.Project
     {
       PrintInstructions = _rooms.PrintInstructions("");
 
-      PrintInstructions.Add(new List<ConsoleParams>() { new ConsoleParams(" ") });
-
       Calculator calc = _game.CurrentPlayer.Inventory.Find(item =>
       {
         return item is Calculator;
@@ -152,20 +370,15 @@ namespace ConsoleAdventure.Project
       {
         if (calc.On)
         {
-          calc.Display.ForEach(line =>
-          {
-            PrintInstructions.Add(line);
-          });
+          PrintInstructions.NewLine();
+          PrintInstructions.AddInstructions(calc.Display);
         }
       }
 
       if (instructions != null)
       {
-        PrintInstructions.Add(new List<ConsoleParams>() { new ConsoleParams(" ") });
-        instructions.ForEach(line =>
-        {
-          PrintInstructions.Add(line);
-        });
+        PrintInstructions.NewLine();
+        PrintInstructions.AddInstructions(instructions);
       }
     }
 

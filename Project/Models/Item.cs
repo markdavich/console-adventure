@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using ConsoleAdventure.Project.Interfaces;
-using ConsoleParams = ConsoleAdventure.Models.ConsoleParams;
 using System;
 using System.Linq;
-using PrintInstruction = System.Collections.Generic.List<ConsoleAdventure.Models.ConsoleParams>;
-using PrintInstructions = System.Collections.Generic.List<System.Collections.Generic.List<ConsoleAdventure.Models.ConsoleParams>>;
+using ConsoleAdventure.Classes;
+using static ConsoleAdventure.Types;
 
 namespace ConsoleAdventure.Project.Models
 {
@@ -19,9 +18,7 @@ namespace ConsoleAdventure.Project.Models
     {
       get
       {
-        PrintInstructions result = new PrintInstructions() { new PrintInstruction() };
-        result[0].Add(new ConsoleParams($"You use the {Name}", ConsoleColor.Green));
-        return result;
+        return new PrintInstructions($"You use the {Name}", ConsoleColor.Green);
       }
     }
 
@@ -29,9 +26,7 @@ namespace ConsoleAdventure.Project.Models
     {
       get
       {
-        PrintInstructions result = new PrintInstructions() { new PrintInstruction() };
-        result[0].Add(new ConsoleParams($"You take the {Name}", ConsoleColor.Green));
-        return result;
+        return new PrintInstructions($"You take the {Name}", ConsoleColor.Green);
       }
     }
 
@@ -41,28 +36,22 @@ namespace ConsoleAdventure.Project.Models
 
     public string Glyph { get; set; }
 
-    public PrintInstruction ItemDescription
+    public virtual PrintInstructionLine ItemDescription
     {
       get
       {
-        PrintInstruction pi = new PrintInstruction();
-        pi.Add(new ConsoleParams("A "));
-        pi.Add(new ConsoleParams($"{Color} ", Color));
-        pi.Add(new ConsoleParams(Name));
-        return pi;
+        return new PrintInstructionLine().Add("A ").Add($"{Color} ", Color).Add(Name);
       }
     }
 
     // "🂠"
 
 
-    public PrintInstruction Symbol
+    public PrintInstructionLine Symbol
     {
       get
       {
-        PrintInstruction pi = new PrintInstruction();
-        pi.Add(new ConsoleParams(Glyph, Color));
-        return pi;
+        return new PrintInstructionLine().Add(Glyph, Color);
       }
     }
 
@@ -96,9 +85,7 @@ namespace ConsoleAdventure.Project.Models
     {
       get
       {
-        PrintInstructions result = new PrintInstructions() { new PrintInstruction() };
-        result[0].Add(new ConsoleParams($"You can't use the {Name}", ConsoleColor.Green));
-        return result;
+        return new PrintInstructions($"You can't use the {Name}", ConsoleColor.Green);
       }
     }
 
@@ -124,9 +111,7 @@ namespace ConsoleAdventure.Project.Models
     {
       get
       {
-        PrintInstructions result = new PrintInstructions() { new PrintInstruction() };
-        result[0].Add(new ConsoleParams("You try to take the Pot but it's too heavy.", ConsoleColor.DarkRed));
-        return result;
+        return new PrintInstructions("You try to take the Pot but it's too heavy.", ConsoleColor.DarkRed);
       }
     }
     public Pot() : base("Pot", "🗑", ConsoleColor.DarkYellow)
@@ -160,9 +145,7 @@ namespace ConsoleAdventure.Project.Models
     {
       get
       {
-        PrintInstructions result = new PrintInstructions() { new PrintInstruction() };
-        result[0].Add(new ConsoleParams("You turn on the calculator and run program Alpha", ConsoleColor.DarkGreen));
-        return result;
+        return new PrintInstructions("You turn on the calculator and run program Alpha", ConsoleColor.DarkGreen);
       }
     }
 
@@ -170,12 +153,11 @@ namespace ConsoleAdventure.Project.Models
     {
       get
       {
-        PrintInstructions pi = new PrintInstructions();
         string[] lines = ProgramText.Split('\n');
-        pi.Add(new PrintInstruction() { new ConsoleParams(lines[1], ConsoleColor.DarkGray) });
+        PrintInstructions pi = new PrintInstructions(lines[1], ConsoleColor.DarkGray);
         for (int i = 2; i < lines.Length; i++)
         {
-          pi.Add(new PrintInstruction() { new ConsoleParams(lines[i], ConsoleColor.Green) });
+          pi.NewLine(lines[i], ConsoleColor.Green);
         }
         return pi;
       }
@@ -226,31 +208,29 @@ namespace ConsoleAdventure.Project.Models
       { Lock.Key.Apéry, 1202 }
     };
 
+    private Direction _direction { get; set; }
+    private ConsoleColor _doorColor { get; set; }
+
     public PrintInstructions Display
     {
       get
       {
-        PrintInstructions pi = new PrintInstructions() { };
         string hint = Enum.GetName(typeof(Lock.Key), Key);
-
         int leadingSpaces = (25 - hint.Length) / 2;
         int trailingSpaces = 25 - leadingSpaces - hint.Length;
-
-
         string[] lines = KeyPadText.Split('\n');
-        pi.Add(new PrintInstruction() { new ConsoleParams(lines[0], Color) });
-        pi.Add(new PrintInstruction() { });
-        pi[1].Add(new ConsoleParams("  ║", Color));
-        pi[1].Add(new ConsoleParams(new String(' ', leadingSpaces)));
-        pi[1].Add(new ConsoleParams(hint, ConsoleColor.DarkRed));
-        pi[1].Add(new ConsoleParams(new String(' ', trailingSpaces)));
-        pi[1].Add(new ConsoleParams("║", Color));
+
+        PrintInstructions pi = new PrintInstructions(lines[1], Color);
+        pi.NewLine("  ║", Color)
+          .Add(new String(' ', leadingSpaces))
+          .Add(hint, ConsoleColor.DarkRed)
+          .Add(new String(' ', trailingSpaces))
+          .Add("║", Color);
 
         for (int i = 2; i < lines.Length; i++)
         {
-          pi.Add(new PrintInstruction() { new ConsoleParams(lines[i], Color) });
+          pi.NewLine(lines[i], Color);
         }
-
 
         return pi;
       }
@@ -271,7 +251,18 @@ namespace ConsoleAdventure.Project.Models
       return code == Values[Key];
     }
 
-    public KeyPadLock(ConsoleColor color) : base("Numeric Key Pad Lock", "🔒", color)
+    public override PrintInstructionLine ItemDescription
+    {
+      get
+      {
+        return new PrintInstructionLine().Add("A ").Add($"{Color} ", Color).Add(Name)
+          .Add($" on the ").Add($"{_direction} ", _doorColor).Add("Door.");
+      }
+    }
+
+    public const string KeyPadName = "Numeric Key Pad Lock";
+
+    public KeyPadLock(ConsoleColor color, Direction direction, ConsoleColor doorColor) : base(KeyPadName, "🔒", color)
     {
       Random random = new Random();
       Key = (Lock.Key)(
@@ -280,7 +271,8 @@ namespace ConsoleAdventure.Project.Models
             Enum.GetValues(typeof(Lock.Key)).Cast<int>().Max()
           )
       );
+      _doorColor = doorColor;
+      _direction = direction;
     }
-
   }
 }

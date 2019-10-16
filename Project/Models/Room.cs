@@ -24,6 +24,16 @@ namespace ConsoleAdventure.Project.Models
 
       return result;
     }
+
+    public Item FindItem(string name)
+    {
+      return Items.Find(item => item.Name.ToLower() == name.ToLower());
+    }
+
+    public void RemoveItem(string name)
+    {
+      TakeItem(name);
+    }
   }
 }
 
